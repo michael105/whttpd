@@ -30,6 +30,8 @@ Either build yourself, or download the binary for 64bit linux supplied in
 
 Configuration is done via commandline arguments.
 
+To browse markdown files as html, lowdown is needed. [https://github.com/kristapsdz/lowdown](https://github.com/kristapsdz/lowdown) / [https://github.com/michael105/static-bin](https://github.com/michael105/static-bin)
+
 
 ##### Usage:
 
