@@ -25,7 +25,7 @@ which shouldn't interfere with other javascript frameworks. (using fetch)
 
 ##### Install:
 
-Either build yourself, or download one of the supplied binaries for 64bit linux supplied in
+Either build yourself, or download the binary for 64bit linux supplied in
 /bin. 
 
 Configuration is done via commandline arguments.
