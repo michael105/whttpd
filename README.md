@@ -1,0 +1,112 @@
+
+### whttdp
+
+#### ''SSA'' micro webserver
+
+
+For local website development, instantly usable without configuration.
+
+Forking, using sendfile. ('new' linux syscall).
+
+
+Uses inotify and ''SSA'' (Server Side Aborts) to watch the webroot and instantly reload all html pages in the browser,
+when files within the web directory hierarchy are changed. 
+Reloads also 404 sites and directory indexes with new content.
+
+Can optionally automatically rebuild pages with make or any other tool, 
+if sources are changed in the htmlroot or any other watched location.
+
+Optionally build html pages from markdown files with lowdown or any other tool on the fly.
+
+To trigger reloads a small (10 lines) javascript is appended to each page,
+which shouldn't interfere with other javascript frameworks. (using fetch)
+
+-----
+
+##### Install:
+
+Either build yourself, or download one of the supplied binaries for 64bit linux supplied in
+/bin. 
+
+Configuration is done via commandline arguments.
+
+
+##### Usage:
+
+
+   `whttpd`
+
+serve the current directory at port 4000.
+(http://localhost:4000)
+
+
+`whttpd -w [webroot]`
+
+Start webserver (default port 4000) and the 'ssa' server (port 4001).  
+Modify all sent html pages, append a small javascript, and trigger reloads  
+in the clients, as soon files within webroot are modified, added or
+deleted.
+
+<br>
+
+
+```
+whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notifyport] [-R recursion] [-I header] [-A append] [-e cmd]  [htmlroot] [watchdir1] [watchdir2 ...]
+
+ -h                show usage
+ -H                show help
+ -v                increase verbosity (max -vvv)
+ -q                quiet
+ -r htmlroot       path of the html server root (defaults to . or arg1)
+ -p serverport     port of the webserver (4000)
+ -g gid            Restrict served files to group owner gid
+ -u uid            Restrict served files to file owner uid
+ -C                add to http 'Pragma: no-cache'
+ -a                watch hidden files/dirs (. and ~)
+ -P notifyport     port used to trigger reloads (4001)
+ -R recursion      maximum recursion depth of watched directories (255)
+ -L                watcher follows symbolic links
+ -w                modify pages to push updates
+ -m                execute lowdown to convert markdown to html
+ -i                lowdown, with options --html-no-skiphtml and --html-no-escapehtml
+ -I header         html before the output of -i
+ -A append         html after the output of -i
+ -M                execute make in 'htmlroot', when files are changed
+ -e cmd            execute cmd in 'htmlroot', when files are changed
+ ```
+
+
+
+
+
+-----
+
+
+CC-BY-SA 4.0, 2025 misc147, www.github.com/michael105
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
