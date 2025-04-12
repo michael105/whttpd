@@ -145,7 +145,7 @@ static int _http_header( char *buf, uint bufsize, int status, const char *phrase
 
 			);
 
-#ifdef mini_strftime
+#ifdef with_strftime
 	time_t now = time(0);
 	struct tm tim;
    pos += strftime(pos, bufsize - (pos-buf), "Date: %a, %d %b %Y %H:%M:%S GMT\r\n", localtime_r(&now,&tim) );
@@ -156,7 +156,7 @@ static int _http_header( char *buf, uint bufsize, int status, const char *phrase
 #endif
 
 	if ( mod )
-		pos += snprints( pos, bufsize - ( pos-buf ), "ETag: ",FIHEX(mod), "\r\n" );
+		pos += snprints( pos, bufsize - ( pos-buf ), "ETag: ",FIxAP(mod), "\r\n" );
  
 	/*
 	if ( mod ) // deviating, totally. but works. and should work.  send the modification

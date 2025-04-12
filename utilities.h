@@ -47,11 +47,22 @@ const char* muitohex( char* buf, uint i, uint mindigits ){
 	return(buf);
 }
 
+// base 16, encoding A-P, optimized for machine readability
+const char* multoap( char* buf, ulong l ){
+	char *p = buf;
+	do {
+		*p++ = (l&0xf) + 'A';
+		l >>= 4;
+	} while ( l );
+	*p = 0;
+	return ( buf );
+}
 
 
 #define FI(_x) muitodec( (char[16]){},(_x))
 #define FL(_x) multodec( (char[24]){},(_x))
 #define FIHEX(_x) muitohex( (char[10]){},(_x),0)
+#define FIxAP(_x) multoap( (char[10]){},(_x))
 
 #ifdef va_start
 #undef va_start
