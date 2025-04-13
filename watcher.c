@@ -26,7 +26,7 @@
 	p,serverport,"port of the webserver (4000)", \
 	g,gid,"Restrict served files to group owner gid", \
 	u,uid,"Restrict served files to file owner uid", \
-	C,,"add to http 'Pragma: no-cache'", \
+	C,,"add to http a 'Pragma: no-cache'", \
 \
 NSMALL(	\
 	a,,"watch hidden files/dirs (. and ~)", \
@@ -77,7 +77,10 @@ uint opts=0;
 uint verbose=0;
 pid_t serverpid, notifypid, parentpid;
 
+
+#define MAXPATHREC 255 // default maximum of nested directory recursion
 #define MAXWATCHES 1024
+
 int watches[MAXWATCHES];
 int watchpos = 0;
 static int removewatches();
@@ -299,7 +302,6 @@ static char *getpath(char* ppath){
 
 # define abort(...) { kill(pid,9);exit(__VA_ARGS__ + 0); }
 
-#define MAXPATHREC 255 // default maximum of nested directory recursion
 
 
 MAIN{

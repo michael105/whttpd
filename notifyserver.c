@@ -29,7 +29,7 @@ void notify_sighandler(int sig){
 void triggerreload(){
 	verbose(0,"Trigger reload");
 	while ( fdpos --> 0 ){
-		write( fds[fdpos], "\030\n", 3); // Cancel 
+		//write( fds[fdpos], "\030\n", 3); // Cancel 
 		close(fds[fdpos]);
 	}
 	fdpos = 0;
@@ -75,7 +75,7 @@ static int openport(){
 			err( EFAULT, "watcher:" _msg ); \
 		} \
 		warning(ERRNO(_r), "watcher: " _msg "\nRetry ", FI(rep),"\n" ); \
-		usleep(200000*rep); \
+		usleep(50000*rep*rep); \
 }
 
 #define RETRY2(_ret,_repeat,_msg) int _rep = 0; do {\
@@ -85,7 +85,7 @@ static int openport(){
 				err( EFAULT, "watcher:" _msg ); \
 			} \
 		warning(ERRNO(_ret), "watcher: " _msg "\nRetry ", FI(_rep),"\n" ); \
-		usleep(200000*_rep); \
+		usleep(50000*_rep*_rep); \
 		} } while
 
 
@@ -103,7 +103,7 @@ static int openport(){
 				err( ERRNO(_ret), "watcher:" _msg ); \
 			} \
 			warning(ERRNO(_ret), "watcher: " _msg "\nRetries: ", FI(_rep),"\nerrno: ",FI(ERRNO(_ret))  ); \
-			usleep(200000*_rep); \
+			usleep(50000*_rep*_rep); \
 			_rep++; \
 		} } 
 
@@ -136,7 +136,7 @@ static int openport(){
 			warning(ERRNO(tmpfd), "watcher:  open socket\nRetries: ", FI(rep),"\nerrno: ",FI(ERRNO(tmpfd))  ); 
 			if ( nsockfd>0 ) close(nsockfd); 
 			nsockfd = 0;
-			usleep(200000*rep); 
+			usleep(50000*rep*rep); 
 			rep++; 
 		} 
 	nsockfd = tmpfd;
@@ -166,51 +166,57 @@ static int openport(){
   //    RETRY(r,"watcher: Error opening port");
   // }
   	RETRY4( (r=bind(nsockfd, (struct sockaddr *) &address, sizeof(address))), 
-			"watcher: Error open port", 10, != 0 );
+			"bind port", 10, != 0 );
+
 	
-      verbose(0,"started, listening at port ", FI(port));
-
+	rep = 0;
+	while ( sigreload || (r=listen(nsockfd, 10)) < 0) {
+		//if ( ERRNO(r) == EINTR ){
+		if ( sigreload ){
+			verbose(1, "sigreload" );
+			sigreload = 0;
+			triggerreload();
+			//close(nsockfd);
+			//exit(0);
+	
+		} else 
+			RETRY(r,"listen");
+	}
+	
+	verbose(0,"started, listening at port ", FI(port));
+	
 	while ( 1 ){
-
-		rep = 0;
-     while ( sigreload || (r=listen(nsockfd, 10)) < 0) {
-		  //if ( ERRNO(r) == EINTR ){
-			if ( sigreload ){
-					verbose(1, "sigreload" );
-					sigreload = 0;
-					triggerreload();
-					//close(nsockfd);
-					//exit(0);
-			  
-		  } else 
-         	RETRY(r,"listen");
-      }
-
 		rep=0; // can also be a client side abort/whatever these javascript
-						// implementations are doing. Trying harder.
-      while ( sigreload ||  (rfd = accept(nsockfd, (struct sockaddr *) &address, &addrlen)) < 0 ){
+				 // implementations are doing. Trying harder.
+		while ( sigreload ||  (rfd = accept(nsockfd, (struct sockaddr *) &address, &addrlen)) < 0 ){
 			//if	( ERRNO(rfd) == EINTR ) {
-			  if ( sigreload ){
-					sigreload = 0;
-					triggerreload();
-					verbose(1, "sigreload" );
-					//close(nsockfd);
-					//exit(0);
-			  
+			if ( sigreload ){
+				sigreload = 0;
+				triggerreload();
+				verbose(1, "sigreload" );
+				//close(nsockfd);
+				//exit(0);
+	
 			} else
 				RETRY(rfd,"Accept aborted");
 		}
-
+	
 		//	nwrites(fds[a], "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n"
 		//		"\r\n\r\n<html></html>\r\n\r\n" );
+		nwrites(rfd,	"HTTP/1.0 200 Ok\r\n"
+				"Access-Control-Allow-Origin: *\r\n"
+				"Access-Control-Allow-Methods: GET\r\n"
+				"Access-Control-Allow-Headers: *\r\n"
+				"Abort\018\e" ); // trigger error
+
 	
 		verbose(1,"notifyserver, accepted: ", FI(fdpos) );
 		if ( fdpos >= MAXRELOAD )
 			triggerreload(); // reload all other clients, start new fdlist
-
+	
 		fds[fdpos] = rfd;
 		fdpos++;
-
+	
 	}
 
 }

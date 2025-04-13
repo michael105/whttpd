@@ -565,7 +565,6 @@ void __attribute__((noreturn))httpd_serve( pid_t parent ){
 			verbose(1,"forked");
 			close(sockfd);
 			http_handler(rfd);
-			exit(0);
 		}
 		// If parent process, close the response socket
 		else {
