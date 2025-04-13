@@ -229,7 +229,7 @@ static void send_dir( int fd, char *path, struct stat* st, char* resource ){
 	char *pos = buf;
 
 	verbose(1,"List directory: ",path, "   relpath: ", resource);
-	//dbg(path);
+
 	if ( chdir( path ) < 0 )
 		send_error(fd,500,"chdir");
 
@@ -249,19 +249,18 @@ static void send_dir( int fd, char *path, struct stat* st, char* resource ){
 	// path should be cleaned here
 	pos += snprints( pos, BUFSIZE-(pos-buf), "<h3>Directory: ",path,"</h1>\n\n" );
 
-	//dbg(buf);
+	# define nmemcps(_dst,_src) ({ \
+			if(sizeof(_src)>=BUFSIZE-(pos-buf)) send_error(fd,500,"Buffer"); \
+			memcpy(_dst,_src,sizeof(_src)); sizeof(_src); })
 
 	if ( strlen(path)> 1 && strncmp(path,GET(r), strlen(path)-2 ) ) 
-		pos += snprints( pos, BUFSIZE-(pos-buf),"<a href=\"..\">Up .. &uarr;</a><br/>\n<br/>\n" ); 
+		pos += nmemcps( pos, "<a href=\"..\">Up .. &uarr;</a><br/>\n<br/>\n" ); 
 	else
-		pos += snprints( pos, BUFSIZE-(pos-buf),"(Root)<br/>\n<br/>\n" ); 
+		pos += nmemcps( pos, "(Root)<br/>\n<br/>\n" ); 
 
 	//dbg( fd, (pos-buf) );
 
 	nwrite(fd,buf,pos-buf);
-
-	//if ( resource[1] )
-	//	strcat(resource,"/");
 
 	pos = buf + snprints(buf, BUFSIZE, 
 			"ls | "
@@ -269,10 +268,8 @@ static void send_dir( int fd, char *path, struct stat* st, char* resource ){
 	if ( resource[1] ) // not in root, need to append /
 		 *pos++ = '/';
 
-	strncpy(pos, "\\1\\\">\\1</a><br/>;'"
-			"; echo '</body></html>'" , BUFSIZE-(pos-buf)  );
-
-	//	printvl( );
+	nmemcps(pos, "\\1\\\">\\1</a><br/>;'"
+			"; echo '</body></html>'" );
 
 	char *args[] = { "sh", "-c", buf,  0 };
 
@@ -311,7 +308,7 @@ static int convert_file(int fd, char *buf, uint bufsize, char* converter, char *
 
 	pid_t wpid;
 	do {
-		wpid = waitpid( pid, &ws, 0 ); // wait for any child (reap zombies)
+		wpid = waitpid( pid, &ws, 0 ); // wait for child
 	} while ( !( (wpid == pid) && (WIFEXITED(ws) || WIFSIGNALED(ws) )));
 
 	return(WEXITSTATUS(ws));

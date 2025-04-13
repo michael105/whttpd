@@ -11,7 +11,7 @@ Forking, using sendfile. ('new' linux syscall).
 
 Uses inotify and ''SSA'' (Server Side Aborts) to watch the webroot and instantly reload all html pages in the browser,
 when files within the web directory hierarchy are changed. 
-Reloads also 404 sites and directory indexes with new content.
+Reload also 404 sites and directory indexes with new content.
 
 Can optionally automatically rebuild pages with make or any other tool, 
 if sources are changed in the htmlroot or any other watched location.
@@ -26,7 +26,7 @@ which shouldn't interfere with other javascript frameworks. (using fetch)
 ##### Install:
 
 Either build yourself, or download the binary for 64bit linux supplied in
-/bin. 
+/bin. The binary is statically linked with musl.
 
 Configuration is done via commandline arguments.
 

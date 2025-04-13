@@ -57,7 +57,7 @@ DECLARE_SETTING;
 
 #define TOOL whttpd
 #define LICENSE CC-BY-SA-4.0
-#define VERSION "0.1.devel-2uxc"
+#define VERSION "0.1.devel-36bp"
 
 
 #include "tools.h"
@@ -322,7 +322,7 @@ MAIN{
 	// should be possible to submit more files / paths
 	
 	char *path;
-	const char **watchpaths = calloc( argc-(argv-pargv) + 1, sizeof(POINTER) );
+	const char **watchpaths = calloc( argc-(argv-pargv) + 2, sizeof(POINTER) );
 
 	if ( OPT(r) ){
 		 path = GET(r);

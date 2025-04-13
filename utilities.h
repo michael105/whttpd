@@ -64,6 +64,10 @@ const char* multoap( char* buf, ulong l ){
 #define FIHEX(_x) muitohex( (char[10]){},(_x),0)
 #define FIxAP(_x) multoap( (char[10]){},(_x))
 
+
+#define memcps( _dest, _src ) ({ memcpy( _dest, _src, sizeof(_srv); sizeof(_src); })
+
+
 #ifdef va_start
 #undef va_start
 #undef va_end
@@ -101,6 +105,7 @@ typedef __builtin_va_list va_list;
 #ifdef dprints
 #undef dprints
 #endif
+
 
 // free bsd 
 char *stplcpy(char *dest, const char *src, uint size){
