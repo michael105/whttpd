@@ -415,8 +415,12 @@ static void __attribute__((noreturn))http_handler( int fd ){
 	char* method = strtok_r( buf, " \t\n\r", &p );
 	char* resource = strtok_r( 0, " \t\n\r", &p );
 	char* prot = strtok_r( 0, " \t\n\r", &p );
-	char *petag = strstr( p, "If-None-Match:" );
-	if ( petag ) petag += 15; // point to etag position
+
+	char *petag = 0;
+	if ( *p && prot ){
+		petag = strstr( p, "If-None-Match:" ); // lazy matching
+		if ( petag ) petag += 15; // point to etag position
+	]
 
 	verbose(2,"\nmethod: ",method,"  resource: ", resource, "  prot: ", prot, " petag: ",petag);
 
