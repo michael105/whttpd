@@ -1,5 +1,5 @@
 
-### whttdp
+### whttpd
 
 #### ''SSA'' micro webserver
 
