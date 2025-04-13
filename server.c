@@ -224,11 +224,11 @@ static int cb_writebuffer( int fd, char *buf, char *pos ){
 	return(ret);
 }
 
-static void send_dir( int fd, char *path, struct stat* st ){
+static void send_dir( int fd, char *path, struct stat* st, char* resource ){
 	char buf[BUFSIZE];
 	char *pos = buf;
 
-	verbose(1,"List directory: ",path);
+	verbose(1,"List directory: ",path, "   relpath: ", resource);
 	//dbg(path);
 	if ( chdir( path ) < 0 )
 		send_error(fd,500,"chdir");
@@ -260,11 +260,17 @@ static void send_dir( int fd, char *path, struct stat* st ){
 
 	nwrite(fd,buf,pos-buf);
 
+	//if ( resource[1] )
+	//	strcat(resource,"/");
 
-	snprints(buf, BUFSIZE, 
+	pos = buf + snprints(buf, BUFSIZE, 
 			"ls | "
-			"sed -E 's;(.*);<a href=\\\""/*relpath*/"\\1\\\">\\1</a><br/>;'"
-			"; echo '</body></html>'");
+			"sed -E 's;(.*);<a href=\\\"",resource );
+	if ( resource[1] ) // not in root, need to append /
+		 *pos++ = '/';
+
+	strncpy(pos, "\\1\\\">\\1</a><br/>;'"
+			"; echo '</body></html>'" , BUFSIZE-(pos-buf)  );
 
 	//	printvl( );
 
@@ -467,7 +473,7 @@ static void __attribute__((noreturn))http_handler( int fd ){
 	}
 
 	if ( S_ISDIR( st.st_mode ) ){
-		send_dir( fd, path, &st );
+		send_dir( fd, path, &st, resource );
 	}
 
 	warning(ENXIO, "serve: Unknown file type: ",path);
