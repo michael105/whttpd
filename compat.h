@@ -28,6 +28,7 @@ typedef unsigned long POINTER;
 #include <arpa/inet.h>
 #include <sys/inotify.h>
 #include <dirent.h>
+#include <time.h>
 
 
 extern char** environ;

@@ -133,11 +133,10 @@ static int _http_header( char *buf, uint bufsize, int status, const char *phrase
 
 	char *pos = buf;
 
-	pos += snprints( pos,bufsize, "HTTP/1.0 ", FI(status), " ",phrase, "\r\n"
+	pos += snprints( pos,bufsize, "HTTP/1.1 ", FI(status), " ",phrase, "\r\n"
 			"Server: minihttpd 0.1\r\n" 
 			"Connection: close\r\n"
 			"Public: GET\r\n"
-			"Content-Encoding: none\r\n"
 			"Access-Control-Allow-Origin: *\r\n"
 			"Access-Control-Allow-Methods: GET\r\n"
 			"Access-Control-Allow-Headers: *\r\n",
@@ -416,8 +415,10 @@ static void __attribute__((noreturn))http_handler( int fd ){
 	char* method = strtok_r( buf, " \t\n\r", &p );
 	char* resource = strtok_r( 0, " \t\n\r", &p );
 	char* prot = strtok_r( 0, " \t\n\r", &p );
+	char *petag = strstr( p, "If-None-Match:" );
+	if ( petag ) petag += 15; // point to etag position
 
-	verbose(2,"\nmethod: ",method,"  resource: ", resource, "  prot: ", prot);
+	verbose(2,"\nmethod: ",method,"  resource: ", resource, "  prot: ", prot, " petag: ",petag);
 
 	// ignore the rest. 
 
@@ -457,7 +458,12 @@ static void __attribute__((noreturn))http_handler( int fd ){
 	if ( OPT(u)  && ( st.st_uid != GET(u,int) ) )
 		send_error(fd,403,"Not allowed. (-u)");
 
-
+	if ( petag && ap_match( petag, st.st_mtime ) ){ 
+		verbose(1,"304 ",resource);
+		int len = http_header(buf,BUFSIZE,304,"Not Modified",0,0,st.st_mtime);
+		nwrite( fd, buf, len );
+		exit(0);
+	}
 
 	if ( S_ISREG(st.st_mode) ){
 		/*if ( OPT(x) && ( st.st_mode & ( S_IXGRP|S_IXOTH|S_IXUSR ) ) ){ // executable

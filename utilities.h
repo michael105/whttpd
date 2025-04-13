@@ -58,6 +58,15 @@ const char* multoap( char* buf, ulong l ){
 	return ( buf );
 }
 
+int ap_match( char* str, ulong l ){
+	do {
+		if ( *str != ((l&0xf) + 'A') )
+			return(0);
+		l >>= 4;
+		str++;
+	} while ( l );
+	return(1);
+}
 
 #define FI(_x) muitodec( (char[16]){},(_x))
 #define FL(_x) multodec( (char[24]){},(_x))

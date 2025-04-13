@@ -11,6 +11,7 @@
 #endif
 
 
+#define with_strftime
 
 #include "macros/macrolib.h"
 #include "macros/options.h"
