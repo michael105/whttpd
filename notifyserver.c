@@ -157,7 +157,9 @@ static int openport(){
    int port = GET(P,int);
 
    address.sin_family = AF_INET;
-   address.sin_addr.s_addr = INADDR_ANY;
+   //address.sin_addr.s_addr = INADDR_ANY;
+	inet_aton( GET(l), &address.sin_addr ) ;
+	
    address.sin_port = htons(port);
 
 	rep = 0;
@@ -183,7 +185,7 @@ static int openport(){
 			RETRY(r,"listen");
 	}
 	
-	verbose(0,"started, listening at port ", FI(port));
+	verbose(0,"started, listening at ", GET(l),":",FI(port));
 	
 	while ( 1 ){
 		rep=0; // can also be a client side abort/whatever these javascript

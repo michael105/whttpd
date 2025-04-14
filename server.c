@@ -527,7 +527,8 @@ void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_
 	int port = GET(serverport,int);
 
 	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
+	inet_aton( GET(l), &address.sin_addr ) ;
+	//address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
 
 	int r;
@@ -536,12 +537,9 @@ void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_
 		errk(ERRNO(r),"Error setting socket options" );
 	}
 
-
 	if ( (r=bind(sockfd, (struct sockaddr *) &address, sizeof(address))) != 0){
 		errk(ERRNO(r),"Error binding socket" );
 	}
-
-	verbose(0,"started, listening at port ",FI(port));
 
 	int retr = 0;
 	if ( (r=listen(sockfd, 10)) < 0) {
@@ -552,6 +550,8 @@ void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_
 		errk(ERRNO(r),"Error listen" );
 	}
 	retr=0;
+
+	verbose(0,"started, listening at ", inet_ntoa( address.sin_addr ) ,":",FI(port));
 
 	// Begin listen loop
 	while (1) {

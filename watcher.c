@@ -25,6 +25,7 @@
 \
 	r,htmlroot,"path of the html server root (defaults to . or arg1)", \
 	p,serverport,"port of the webserver (4000)", \
+	l,listenaddr,"Address to listen (127.0.0.1)", \
 	g,gid,"Restrict served files to group owner gid", \
 	u,uid,"Restrict served files to file owner uid", \
 	C,,"add to http a 'Pragma: no-cache'", \
@@ -307,13 +308,14 @@ static char *getpath(char* ppath){
 
 MAIN{
 	char **pargv = argv;
-
-	verbose = 1;
 	int r;
 
+	// defaults
+	verbose = 1;
 	NSMALL( SET(R,MAXPATHREC,int);
 	SET(P,4001,int); )
 	SET(p,4000,int);
+	SET(l,"127.0.0.1");
 
 
 	PARSEARGV( 'h': usage() NSMALL(, 'H': help(), 'v': verbose++, 'q': verbose=0) );
