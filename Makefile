@@ -5,6 +5,9 @@ whttpd:
 
 
 up:
+	updateversion.sh watcher.c
+	gtam rev. `revision.sh`
+	git push
 
 
 
