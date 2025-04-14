@@ -59,7 +59,7 @@ DECLARE_SETTING;
 
 #define TOOL whttpd
 #define LICENSE CC-BY-SA-4.0
-#define VERSION "0.1.devel-370a"
+#define VERSION "0.1.devel-3712"
 
 
 #include "tools.h"
