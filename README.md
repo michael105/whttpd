@@ -62,6 +62,7 @@ whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notify
  -q                quiet
  -r htmlroot       path of the html server root (defaults to . or arg1)
  -p serverport     port of the webserver (4000)
+ -l listenaddr     Address to listen (127.0.0.1)
  -g gid            Restrict served files to group owner gid
  -u uid            Restrict served files to file owner uid
  -C                add to http 'Pragma: no-cache'
