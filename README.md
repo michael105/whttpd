@@ -43,18 +43,18 @@ serve the current directory at port 4000.
 (http://localhost:4000)
 
 
-`whttpd -w [webroot]`
+`whttpd -w [htmlroot]`
 
 Start webserver (default port 4000) and the 'ssa' server (port 4001).  
 Modify all sent html pages, append a small javascript, and trigger reloads  
-in the clients, as soon files within webroot are modified, added or
+in the clients, as soon files within htmlroot are modified, added or
 deleted.
 
 <br>
 
 
 ```
-whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notifyport] [-R recursion] [-I header] [-A append] [-e cmd]  [htmlroot] [watchdir1] [watchdir2 ...]
+whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notifyport] [-R recursion] [-I header] [-A append] [-e cmd] [htmlroot] [watchdir1] [watchdir2 ...]
 
  -h                show usage
  -H                show help
@@ -79,14 +79,20 @@ whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notify
  ```
 
 
-
-
-
 -----
 
 
-CC-BY-SA 4.0, 2025 misc147, www.github.com/michael105
+CC-BY-SA 4.0, 2025 misc147 (fee227), www.github.com/michael105
 
+
+
+In my interpretation and intention, the cc-by-sa license
+allows to reuse this work in its whole or parts,
+also commercially, without infecting.
+
+
+(As long, my work isn't the substantial part of the derived work, this
+might be discussable, but silly as well.)
 
 
 

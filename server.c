@@ -420,7 +420,8 @@ static void __attribute__((noreturn))http_handler( int fd ){
 	if ( *p && prot ){
 		petag = strstr( p, "If-None-Match:" ); // lazy matching
 		if ( petag ) petag += 15; // point to etag position
-	]
+	}
+	
 
 	verbose(2,"\nmethod: ",method,"  resource: ", resource, "  prot: ", prot, " petag: ",petag);
 
@@ -492,7 +493,7 @@ static void __attribute__((noreturn))http_handler( int fd ){
 
 
 
-void __attribute__((noreturn))httpd_serve( pid_t parent ){
+void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_t parent, char* htmlroot ){
 	// Create a socket
 	int rfd;
 	socklen_t addrlen;

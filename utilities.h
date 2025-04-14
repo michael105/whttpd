@@ -65,6 +65,10 @@ int ap_match( char* str, ulong l ){
 		l >>= 4;
 		str++;
 	} while ( l );
+// unnecessary for timestamps
+	if ( *str > 41 ) // separator 0,space,\r,\n,",',.. 
+		return(0);
+
 	return(1);
 }
 

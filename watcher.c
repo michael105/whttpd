@@ -343,7 +343,7 @@ MAIN{
 
 
 #ifdef HTTPDONLY
-	httpd_serve( getpid() );
+	httpd_serve( opts, setting, getpid(), GET(r) );
 #else
 
 #ifndef WATCHERONLY
@@ -351,7 +351,7 @@ MAIN{
 	serverpid = fork();
 
 	if ( !serverpid )
-			httpd_serve( parentpid );
+			httpd_serve( opts, setting, parentpid, GET(r) );
 
 	// install signal handlers
 	struct sigaction sa;
