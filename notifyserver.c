@@ -15,9 +15,10 @@ int sigreload = 0;
 
 void notify_sighandler(int sig){
 	sigreload = 1;
-	if ( sig == SIGUSR1 )
+	if ( sig == SIGUSR1 ){
+		verbose(0,"Reload");
 		return;
-	if ( sig != SIGQUIT ){
+	} else if ( sig != SIGQUIT ){
 		if ( parentpid ) kill( parentpid, SIGUSR1 );
 	}
 	verbose(0,"Quit");
@@ -209,9 +210,9 @@ static int openport(){
 				"Access-Control-Allow-Origin: *\r\n"
 				"Access-Control-Allow-Methods: GET\r\n"
 				"Access-Control-Allow-Headers: *\r\n"
-				"Abort\018\e" ); // trigger error
+				"Abort\025\025" ); // trigger error
 
-	
+
 		verbose(1,"notifyserver, accepted: ", FI(fdpos) );
 		if ( fdpos >= MAXRELOAD )
 			triggerreload(); // reload all other clients, start new fdlist
