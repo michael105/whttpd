@@ -9,17 +9,17 @@
 int fds[MAXRELOAD];
 int fdpos = 0;
 int nsockfd = 0; // socket of the notifyserver
-int sigreload = 0;
+int sigrestart = 0;
 
 
 
 void notify_sighandler(int sig){
-	sigreload = 1;
-	if ( sig == SIGUSR1 ){
-		verbose(0,"Reload");
+	sigrestart = 1;
+	if ( sig == SIGUSR1 || sig == SIGTERM ){
+		verbose(0,"Restart");
 		return;
 	} else if ( sig != SIGQUIT ){
-		if ( parentpid ) kill( parentpid, SIGUSR1 );
+		if ( watcherpid ) kill( watcherpid, SIGUSR1 );
 	}
 	verbose(0,"Quit");
 	exit(0);
@@ -36,18 +36,46 @@ void triggerreload(){
 	fdpos = 0;
 }
 
+static void openport();
 
-static int openport(){
+static void reopenport(){
+	//return(pid);
+	kill(notifypid,SIGUSR1); // trigger reload
+	//kill(pid,SIGTERM); // close all connections
+									 
+	int ws;
+	pid_t wpid;
+	do {
+		wpid = waitpid( -1, &ws, 0 ); // wait for pid to exit (reap zombies)
+	} while ( !( ( (wpid == notifypid) && (WIFEXITED(ws) || WIFSIGNALED(ws) ) ) ) );
+
+	int rep = 0;
+	//usleep(50000);
+	while ( kill(notifypid,SIGTERM) == 0 ){
+		warning( ERRNO(0),"rekill zombie");
+		if ( rep++>10 ){
+			warning( ERRNO(0),"Kill: ",FI(notifypid));
+			kill(notifypid,SIGKILL);
+		}
+		usleep(200000);
+	}
+
+	openport(); // restart */
+}
+
+
+
+static void openport(){
 
 	notifypid = fork();
 
 	if ( notifypid != 0 ){
-		return(notifypid);
+		return;
 	}
 	
 	prctl(PR_SET_NAME, (ulong)_Q(MODULE), 0, 0, 0);
 
-	sigreload=0;
+	sigrestart=0;
 	nsockfd = 0;
 
    int rfd = 0;
@@ -71,67 +99,50 @@ static int openport(){
 	int rep = 0;
 
 #define RETRY(_r,_msg) {\
-		if ( ++rep > 10 ){ \
-			kill(serverpid,SIGTERM); \
-			err( EFAULT, "watcher:" _msg ); \
+		if ( rep > 10 ){ \
+			kill(watcherpid,SIGTERM); \
+			err( EFAULT, _msg ); \
 		} \
-		warning(ERRNO(_r), "watcher: " _msg "\nRetry ", FI(rep),"\n" ); \
+		warning(ERRNO(_r), _msg "\nRetry ", FI(rep),"\n" ); \
 		usleep(50000*rep*rep); \
+	rep++; \
 }
-
-#define RETRY2(_ret,_repeat,_msg) int _rep = 0; do {\
-		if ( _rep++ ){ \
-			if ( _rep > _repeat ){ \
-				kill(serverpid,SIGTERM); \
-				err( EFAULT, "watcher:" _msg ); \
-			} \
-		warning(ERRNO(_ret), "watcher: " _msg "\nRetry ", FI(_rep),"\n" ); \
-		usleep(50000*_rep*_rep); \
-		} } while
 
 
 #define RETRY4(_try,_msg,_repeat,_condition) {\
 	int _rep = 0,_ret; \
-		while ( sigreload || ( ( _ret =  (_try) ) _condition ) ){ \
-			if ( sigreload ){ \
-				verbose(1,"SIGRELOAD"); \
-				sigreload = _rep = 0; \
+		while ( sigrestart || ( ( _ret =  (_try) ) _condition ) ){ \
+			if ( sigrestart ){ \
+				verbose(1,"SIGRESTART"); \
+				sigrestart = _rep = 0; \
 				/*if ( nsockfd ) close(nsockfd);*/ \
 				/*exit(0);*/ \
 			}  \
 			if ( _rep >= _repeat ){ \
-				kill(serverpid,SIGTERM); \
-				err( ERRNO(_ret), "watcher:" _msg ); \
+				kill(watcherpid,SIGTERM); \
+				err( ERRNO(_ret), _msg ); \
 			} \
-			warning(ERRNO(_ret), "watcher: " _msg "\nRetries: ", FI(_rep),"\nerrno: ",FI(ERRNO(_ret))  ); \
+			warning(ERRNO(_ret), _msg "\nRetries: ", FI(_rep),"\nerrno: ",FI(ERRNO(_ret))  ); \
 			usleep(50000*_rep*_rep); \
 			_rep++; \
 		} } 
 
 
 
-
-   // Check for successful socket initialization
 	//while ((nsockfd = socket(AF_INET, SOCK_STREAM, 0)) <= 0){
     //  RETRY(nsockfd," Error create socket");
    //}
-   //RETRY2(nsockfd,10,"Create socket")
-	//RETRY4((nsockfd = socket(AF_INET, SOCK_STREAM, 0)), "watcher: open socket", 10, <0 );
-
+	RETRY4((nsockfd = socket(AF_INET, SOCK_STREAM, 0)), "open socket", 10, <0 );
+/*
 		rep = 0;
 		int tmpfd = 0;
-		while ( sigreload || ( (tmpfd = socket(AF_INET, SOCK_STREAM, 0) ) < 0 )){ 
-			if ( sigreload ){ 
+		while ( sigrestart || ( (tmpfd = socket(AF_INET, SOCK_STREAM, 0) ) < 0 )){ 
+			if ( sigrestart ){ 
 				verbose(1,"SIGRELOAD"); 
-				rep = 0;
-				sigreload=0;
-				//if ( tmpfd>=0 ) close(tmpfd); 
-				//if ( nsockfd>=0 ) close(nsockfd); 
-				//exit(0); 
+				exit(0); 
 			}  
 			if ( rep >= 10 ){ 
-				kill(serverpid,SIGTERM); 
-				kill(notifypid,SIGTERM); 
+				kill(watcherpid,SIGTERM); 
 				err( ERRNO(tmpfd), "watcher:  cannot open socket"  ); 
 			} 
 			warning(ERRNO(tmpfd), "watcher:  open socket\nRetries: ", FI(rep),"\nerrno: ",FI(ERRNO(tmpfd))  ); 
@@ -141,6 +152,7 @@ static int openport(){
 			rep++; 
 		} 
 	nsockfd = tmpfd;
+	*/
 
 	int r,ret;
 	struct linger li;
@@ -173,14 +185,11 @@ static int openport(){
 
 	
 	rep = 0;
-	while ( sigreload || (r=listen(nsockfd, 10)) < 0) {
-		//if ( ERRNO(r) == EINTR ){
-		if ( sigreload ){
-			verbose(1, "sigreload" );
-			sigreload = 0;
-			triggerreload();
-			//close(nsockfd);
-			//exit(0);
+	while ( sigrestart || (r=listen(nsockfd, 32)) < 0) {
+		if ( sigrestart ){
+			verbose(1, "sigrestart" );
+			close(nsockfd);
+			exit(0);
 	
 		} else 
 			RETRY(r,"listen");
@@ -191,37 +200,33 @@ static int openport(){
 	while ( 1 ){
 		rep=0; // can also be a client side abort/whatever these javascript
 				 // implementations are doing. Trying harder.
-		while ( sigreload ||  (rfd = accept(nsockfd, (struct sockaddr *) &address, &addrlen)) < 0 ){
-			//if	( ERRNO(rfd) == EINTR ) {
-			if ( sigreload ){
-				sigreload = 0;
-				triggerreload();
-				verbose(1, "sigreload" );
-				//close(nsockfd);
-				//exit(0);
-	
+		while ( sigrestart ||  (rfd = accept(nsockfd, (struct sockaddr *) &address, &addrlen)) < 0 ){
+			if ( sigrestart ){
+				//sigrestart = 0;
+				//triggerreload();
+				verbose(1, "sigrestart" );
+				close(nsockfd);
+				exit(0);
 			} else
 				RETRY(rfd,"Accept aborted");
 		}
 	
-		//	nwrites(fds[a], "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n"
-		//		"\r\n\r\n<html></html>\r\n\r\n" );
+		verbose(1,"accepted: ", FI(fdpos) );
+
 		nwrites(rfd,	"HTTP/1.0 200 Ok\r\n"
 				"Access-Control-Allow-Origin: *\r\n"
 				"Access-Control-Allow-Methods: GET\r\n"
 				"Access-Control-Allow-Headers: *\r\n"
-				"Abort\025\025" ); // trigger error
+				"Abort\025\025\n" ); // trigger error, but try to prevent browser side
+										 // security aborts
 
 
-		verbose(1,"notifyserver, accepted: ", FI(fdpos) );
-		if ( fdpos >= MAXRELOAD )
-			triggerreload(); // reload all other clients, start new fdlist
+		//if ( fdpos >= MAXRELOAD )
+		//	triggerreload(); // reload all other clients, start new fdlist
 	
-		fds[fdpos] = rfd;
-		fdpos++;
-	
+		//fds[fdpos] = rfd;
+		//fdpos++;
 	}
-
 }
 
 

@@ -19,7 +19,7 @@ if sources are changed in the htmlroot or another watched location.
 Optionally build html pages from markdown files with lowdown on the fly.
 
 To trigger reloads a small (10 lines) javascript is appended to each page,
-which shouldn't interfere with other javascript frameworks. (uses a basic fetch)
+which shouldn't interfere with other javascript frameworks. (basic fetch, wait asyncron for errors)
 
 -----
 
@@ -83,7 +83,7 @@ whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notify
 -----
 
 
-CC-BY-SA 4.0, 2025 misc147 (fee227), www.github.com/michael105
+CC-BY-SA 4.0, 2025 misc147 (fee227), codeberg.org/misc1
 
 
 

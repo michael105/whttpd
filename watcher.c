@@ -19,7 +19,7 @@
 
 #define OPTIONS \
 	h,,"show usage", \
-	NSMALL(H,,"show help",) \
+	H,,"show help", \
 	v,,"increase verbosity (max -vvv)", \
 	q,,"quiet", \
 \
@@ -77,7 +77,7 @@ HELP(    "Serve a directory at (default) port 4000.\n"
 
 uint opts=0;
 uint verbose=0;
-pid_t serverpid, notifypid, parentpid;
+pid_t serverpid, notifypid, watcherpid;
 
 
 #define MAXPATHREC 255 // default maximum of nested directory recursion
@@ -128,7 +128,7 @@ int nfd; // inotifyfd
 
 #ifndef WATCHERONLY
 
-#include "server.c"
+#include "httpserver.c"
 
 #endif
 
@@ -163,34 +163,6 @@ void watcher_sighandler(int sig){
 	}
 
 	exit(0);
-}
-
-
-static int reopenport( pid_t pid ){
-	//return(pid);
-	kill(pid,SIGUSR1); // trigger reload
-	//kill(pid,SIGTERM); // close all connections
-	/*								 
-	int ws;
-	pid_t wpid;
-	do {
-		wpid = waitpid( -1, &ws, 0 ); // wait for pid to exit (reap zombies)
-	} while ( !( ( (wpid == pid) && (WIFEXITED(ws) || WIFSIGNALED(ws) ) ) ) );
-
-	int rep = 0;
-	//usleep(50000);
-	while ( kill(pid,SIGTERM) == 0 ){
-		warning( ERRNO(0),"rekill zombie");
-		if ( rep++>10 ){
-			warning( ERRNO(0),"Kill: ",pid);
-			kill(pid,SIGKILL);
-		}
-		usleep(200000);
-	}
-
-
-	pid = openport(); // restart */
-	return(pid);
 }
 
 static int watchpath( const char* path, int nfd ){
@@ -309,16 +281,17 @@ static char *getpath(char* ppath){
 MAIN{
 	char **pargv = argv;
 	int r;
+	watcherpid = getpid();
 
 	// defaults
 	verbose = 1;
-	NSMALL( SET(R,MAXPATHREC,int);
-	SET(P,4001,int); )
+	SET(R,MAXPATHREC,int);
 	SET(p,4000,int);
+	SET(P,4001,int);
 	SET(l,"127.0.0.1");
 
 
-	PARSEARGV( 'h': usage() NSMALL(, 'H': help(), 'v': verbose++, 'q': verbose=0) );
+	PARSEARGV( 'h': usage(), 'H': help(), 'v': verbose++, 'q': verbose=0 );
 
 	verbose(0, "started, pid: ",FI(getpid()), " pm : ",FI(PATH_MAX) );
 
@@ -346,14 +319,14 @@ MAIN{
 
 #ifdef HTTPDONLY
 	httpd_serve( opts, setting, getpid(), GET(r) );
+	exit(0); // shouldn't get here
 #else
 
 #ifndef WATCHERONLY
-	parentpid = getpid();
 	serverpid = fork();
 
 	if ( !serverpid )
-			httpd_serve( opts, setting, parentpid, GET(r) );
+			httpd_serve( opts, setting, watcherpid, GET(r) );
 
 	// install signal handlers
 	struct sigaction sa;
@@ -373,8 +346,8 @@ MAIN{
 
 #endif
 
-	pid_t pid = openport();
-	notifypid = pid;
+	// start inotifyserver
+	openport();
 
 
 	// initiate inotify
@@ -382,15 +355,14 @@ MAIN{
 	//nfd = inotify_init1(IN_CLOEXEC);
 	if ( nfd<0 ){
 		ewritesl("Couldn't initiate inotify. No kernel support?" );
-		abort(EFAULT);
+		kill(notifypid,SIGTERM);
+		kill(serverpid,SIGTERM);
+		exit(EFAULT);
 	}
 
 	verbose(1,"inotify initiated");
 
-	//if ( (r=watchpath(path,nfd)) ){
-	//	warning( ERRNO(ERRNO(r)),"Cannot add inotify watch to ",path);
-	//	abort();
-	//}
+	// add inotify watches
 	if ( ( r = traverse_dir( path, GET(R,int), nfd ) ) ){
 		warning( ERRNO(r),"Error adding watches to ",path,"\nContinue");
 	}
@@ -502,11 +474,9 @@ MAIN{
 		}
 
 		if ( reopen )
-			pid = reopenport(pid);
+			reopenport();
 	
 	}
-
-	abort();
 
 #endif // HTTPDONLY
 	exit(0);

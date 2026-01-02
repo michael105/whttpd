@@ -8,79 +8,6 @@
 
 int sockfd = 0;
 
-// bbuf unused.
-#define BBUFSIZE BUFSIZE
-
-char *bbuffer;
-char *bpos;
-char *bend;
-int bfd;
-int berr;
-
-
-void setbfd(int fd){
-	bfd = fd;
-}
-
-void setbbuf(char *buf){
-	bbuffer = bpos = buf;
-}
-
-int bflush(){
-	if ( !bbuffer ) return ( -EINVAL );
-
-	if ( !bfd ) bfd=1; // stdout
-
-	int ret = nwrite(bfd,bbuffer,(bpos-bbuffer));
-	if ( ret>0 )
-		bpos = bbuffer;
-	return(ret);
-}
-
-
-// write to buf, flush, if buffer full
-// doesn't append a 0
-// return negative errno on errors.
-//   else the number of bytes written.
-int bwrite( const char* str ){
-	//int ret = -(bpos-bbuf);
-	const char *p = str;
-	while ( *str ){
-		if ( bpos>= bend ){
-			int r;
-			if ( (r=bflush()) < 0 ){
-				berr = r;
-				return(r);
-			}
-		}
-		*bpos++ = *p++;
-	}
-	return(p-str);
-}
-
-
-// write strings
-// a null pointer aborts writing of the arguments,
-// is also used as sentinel.
-int _bprints( const char* str, ... ){
-#define bprints(...) (__VA_ARGS__,0)
-		int ret = 0;
-		const char *msg;
-		va_list args;
-		va_start(args,str);
-
-		while( (msg=va_arg(args,char*) ) ){
-			int i = bwrite(msg);
-			if ( i<0 )
-				return(i);
-			ret += i;
-		}
-
-		va_end(args);
-		return(ret);
-}
-
-
 
 #define SCRIPTMAXSIZE 512
 
@@ -117,8 +44,8 @@ checkForUpdate();
 void sighandler(int sig){
 	verbose(0,"Quit: ",FI(sig));
 	if ( sockfd ) close(sockfd);
-	if ( sig != SIGQUIT && parentpid ) 
-		kill(parentpid,SIGUSR2);
+	if ( sig != SIGQUIT && watcherpid ) 
+		kill(watcherpid,SIGUSR2);
 	exit(0);
 }
 
@@ -135,13 +62,12 @@ static int _http_header( char *buf, uint bufsize, int status, const char *phrase
 
 	pos += snprints( pos,bufsize, "HTTP/1.1 ", FI(status), " ",phrase, "\r\n"
 			"Server: minihttpd 0.1\r\n" 
-			"Connection: close\r\n"
 			"Public: GET\r\n"
+			"Connection: close\r\n"
 			"Access-Control-Allow-Origin: *\r\n"
 			"Access-Control-Allow-Methods: GET\r\n"
 			"Access-Control-Allow-Headers: *\r\n",
 			(OPT(C)?"Pragma: no-cache\r\n":"")
-
 			);
 
 #ifdef with_strftime
@@ -175,7 +101,6 @@ static int _http_header( char *buf, uint bufsize, int status, const char *phrase
 
 	pos += snprints( pos, bufsize - (pos-buf) , "\r\n" );
 
-	//nwrite( fd, buf, pos-buf );
 	return ( pos-buf );
 }
 
@@ -193,7 +118,7 @@ R"(<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3
 
 
 
-static void send_error(int fd, int e, char *msg){
+static void __attribute__((noreturn))send_error(int fd, int e, char *msg){
 	verbose(1,FI(e),": ",msg);
 
 	char buf[BUFSIZE];
@@ -204,11 +129,11 @@ static void send_error(int fd, int e, char *msg){
 
 	pos += snprints( pos, BUFSIZE-(pos-buf), "Status: ",FI(e),"\n",(char*)msg, "\n</body>\n</html>\n" );
 
-	NSMALL( if ( (pos-buf)+SCRIPTMAXSIZE > BUFSIZE ) // shouldn't happen
-		err( EFAULT, "Buffer Overflow" );
-
+	if ( OPT(w) ){
+		if ( (pos-buf)+SCRIPTMAXSIZE > BUFSIZE ) // shouldn't happen
+			err( EFAULT, "Buffer Overflow" );
 		pos += sprint_html_script(pos);
-	)
+	}
 
 	nwrite(fd, buf, (pos-buf) );
 
@@ -234,10 +159,7 @@ static void send_dir( int fd, char *path, struct stat* st, char* resource ){
 
 	pos += http_header(pos,BUFSIZE,200,"Ok", MIMETYPE(html) ,0,st->st_mtime);
 
-	//dbg(buf);
 	pos += htmlhead(pos,BUFSIZE-(pos-buf),200,path);
-
-	//dbg(buf);
 
 	if ( OPT(w) ){
 		if ( BUFSIZE-(pos-buf) < SCRIPTMAXSIZE )
@@ -257,10 +179,9 @@ static void send_dir( int fd, char *path, struct stat* st, char* resource ){
 	else
 		pos += nmemcps( pos, "(Root)<br/>\n<br/>\n" ); 
 
-	//dbg( fd, (pos-buf) );
-
 	nwrite(fd,buf,pos-buf);
 
+	// write sh command
 	pos = buf + snprints(buf, BUFSIZE, 
 			"ls | "
 			"sed -E 's;(.*);<a href=\\\"",resource );
@@ -284,7 +205,6 @@ static void send_dir( int fd, char *path, struct stat* st, char* resource ){
 }
 
 
-#ifndef MICRO
 static int convert_file(int fd, char *buf, uint bufsize, char* converter, char *path ){
 	verbose( 0, "convert: ", converter, " ", path );
 
@@ -312,16 +232,15 @@ static int convert_file(int fd, char *buf, uint bufsize, char* converter, char *
 
 	return(WEXITSTATUS(ws));
 }
-#endif
 
 
 static void send_file( int fd, char *path, struct stat* st ){
 	char buf[BUFSIZE];
 	char *pos = buf;
-	NSMALL( char script[SCRIPTMAXSIZE]; )
+	char script[SCRIPTMAXSIZE];
 	uint scriptsize = 0;
 
-	verbose(0,"Accepted: ",path);
+	verbose(1,"send file: ",path);
 
 	int ffd = open( path, O_RDONLY );
 	verbose(2,"ffd: ",FI(ffd));
@@ -337,17 +256,17 @@ static void send_file( int fd, char *path, struct stat* st ){
 
 #ifndef SMALL
 	if ( mimetype ){
-	if ( OPT(w) && ( mimetype == MIMETYPE(html) ) ){ //
-		scriptsize = sprint_html_script(script);
-		size += scriptsize;
-	} else if ( OPT(m|i) && ( mimetype == MIMETYPE(markdown) ) ){
-		scriptsize = sprint_html_script(script);
-		converter = "lowdown -s";
-		if ( OPT(i) )
-			converter = "lowdown --html-no-skiphtml --html-no-escapehtml";
-		size = 0; // is unknown.
-		mimetype = MIMETYPE( html );
-	} 
+		if ( OPT(w) && ( mimetype == MIMETYPE(html) ) ){ //
+			scriptsize = sprint_html_script(script);
+			size += scriptsize;
+		} else if ( OPT(m|i) && ( mimetype == MIMETYPE(markdown) ) ){
+			scriptsize = sprint_html_script(script);
+			converter = "lowdown -s";
+			if ( OPT(i) )
+				converter = "lowdown --html-no-skiphtml --html-no-escapehtml";
+			size = 0; // is unknown.
+			mimetype = MIMETYPE( html );
+		} 
 	}
 #endif
 
@@ -430,7 +349,6 @@ static void __attribute__((noreturn))http_handler( int fd ){
 	if ( strncasecmp( "get", method, 3 ) )
 		send_error(fd,405,"Unsupported" );
 
-
 	// Somehow unecessary checks. This should be used locally only. Anyways.
 	if ( prot-resource > PATH_MAX - strlen ( GET(r) ) )
 		send_error(fd,400,"Bad Request");
@@ -438,17 +356,15 @@ static void __attribute__((noreturn))http_handler( int fd ){
 	if ( resource[0] != '/' )
 		send_error(fd,400,"Bad Path: 01");
 
-#ifndef MICRO
 	if ( strstr( resource, ".." ) ) // bad manner in each case.
 		send_error(fd,400,"Bad Path: 02");
-#endif
 
 
 	char path[PATH_MAX];
 	char *pend = stpcpy( path, GET(r) );
 	memcpy( pend, resource, prot-resource );
 
-	verbose(1,"Path:\n", path );
+	verbose(0,"Access: ", path );
 
 
 	struct stat st;
@@ -542,21 +458,19 @@ void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_
 	}
 
 	int retr = 0;
-	if ( (r=listen(sockfd, 10)) < 0) {
+	if ( (r=listen(sockfd, 32)) < 0) {
 		warning(ERRNO(r),"server: listen");
 		if ( ++retr > 10 )
-			errk(EFAULT,"server: abort");
-		usleep(100);
-		errk(ERRNO(r),"Error listen" );
+			errk(EFAULT,"listen");
+		usleep(1000*retr*retr);
+		//errk(ERRNO(r),"Error listen" );
 	}
 	retr=0;
 
 	verbose(0,"started, listening at ", inet_ntoa( address.sin_addr ) ,":",FI(port));
 
-	// Begin listen loop
-	while (1) {
-		// Check for incoming client connections
 
+	while (1) {
 		verbose(2,"accept");
 		while ((rfd = accept(sockfd, (struct sockaddr *) &address, &addrlen)) < 0){
 			warning(ERRNO(rfd),"server: accept");
@@ -570,18 +484,14 @@ void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_
 		// Spawns a child process which handles the request
 		int pid = fork();
 		if (pid < 0){
-			warning(ERRNO(pid),"Error: fork");
+			warning(ERRNO(pid),"fork");
 		}
 
-		// If child process, close the request socket, and initiate the
-		// handler
 		if (pid == 0){
 			verbose(1,"forked");
 			close(sockfd);
 			http_handler(rfd);
-		}
-		// If parent process, close the response socket
-		else {
+		} else {
 			close(rfd);
 		}
 	} // while(1)

@@ -2,7 +2,7 @@
 
 // format: enum,enum, 'index'[' '"typename"'\0']"extension\0" ...
 // typename is also scanned as extension
-#ifndef IGNORESIZE
+#if 0
 #define _MIMETYPES \
   _MIME ( UNKNOWN, unknown,  "\1 octet-stream" ) \
   _MIME ( markdown, text_markdown,  "\6.markdown\0.md\0.mdown\0.markdn" ) \
@@ -44,22 +44,25 @@
 
 #define _MIMETYPES \
   _MIME ( UNKNOWN, unknown,  "\1 octet-stream" ) \
-  _MIME ( markdown, text_markdown,  "\6.markdown\0.md" ) /* unspecified */ \
+  _MIME ( plain, text_plain,  "\6.plain\0README\0.nfo\0.txt\0.asci\0.text\0.conf" ) \
+  _MIME ( markdown, text_markdown,  "\6.markdown\0.md\0.mdown\0.markdn" ) \
+  _MIME ( richtext, text_richtext,  "\6.richtext\0.rtx\0.rst" ) \
+  _MIME ( asciidoc, text_asciidoc,  "\6.asciidoc\0.asc" ) \
    _MIME( aac, audio_aac, "\3.aac" )  /* AAC audio file */ \
    _MIME( abw, application_x_abiword, "\1 x-abiword\0.abw" )  /* AbiWord document */ \
-   _MIME( arc, application_octet_stream, "\1.arc\0.bin" )  /* Archive document, any kind*/ \
    _MIME( avi, video_x_msvideo, "\5 x-ms_video\0.avi" )  /* AVI: Audio Video Interleave */ \
    _MIME( azw, application_vnd_amazon_ebook, "\1 vnd.amazon.ebook\0.azw" )  /* Amazon Kindle eBook format */ \
-  _MIME ( bmp, image_bmp,  "\4.bmp" ) \
+   _MIME( bmp, image_bmp,  "\4.bmp" ) \
    _MIME( bz, application_x_bzip, "\1 x-bzip\0.bz" )  /* BZip archive */ \
    _MIME( bz2, application_x_bzip2, "\1 x-bzip2\0.bz2" )  /* BZip2 archive */ \
-  _MIME( csh, application_x_csh, "\1 x-csh\0.csh" )  /* C-Shell script */ \
+   _MIME( c, text_x_c,  "\6 x-c\0.c\0.h" ) \
+   _MIME( csh, application_x_csh, "\1 x-csh\0.csh" )  /* C-Shell script */ \
    _MIME( css, text_css, "\6.css" )  /* Cascading Style Sheets (CSS) */ \
    _MIME( csv, text_csv, "\6.csv" )  /* Comma-separated values (CSV) */ \
-   _MIME( doc, application_msword, "\1 msword\0.doc" )  /* Microsoft Word */ \
    _MIME( epub, application_epub_zip, "\1.epub" )  /* Electronic publication (EPUB) */ \
    _MIME( gif, image_gif, "\4.gif" )  /* Graphics Interchange Format (GIF) */ \
-   _MIME( html, text_html, "\6.html\0htm" )  /* HyperText Markup Language (HTML) */ \
+   _MIME( gz, 	application_gz,  "\1.gz" ) \
+   _MIME( html, text_html,  "\6.html\0.shtml\0.htm\0.php" ) \
    _MIME( ico, image_x_icon, "\4 x-icon\0.ico" )  /* Icon format */ \
    _MIME( ics, text_calendar, "\6.calendar\0.ics" )  /* iCalendar format */ \
    _MIME( jar, application_java_archive, "\1 java-archive\0.jar" )  /* Java Archive (JAR) */ \
@@ -68,16 +71,21 @@
    _MIME( json, application_json, "\1.json" )  /* JSON format */ \
    _MIME( midi, audio_midi, "\3.midi\0.mid" )  /* Musical Instrument Digital Interface (MIDI) */ \
    _MIME( mpeg, video_mpeg, "\5.mpeg" )  /* MPEG Video */ \
-  _MIME ( msword, application_msword,  "\1 msword\0.doc" ) \
+   _MIME( mp3, audio_mpeg3, "\3.mpeg3\0.mp3" ) \
+   _MIME( msword, application_msword,  "\1 msword\0.doc" ) \
+   _MIME( octet_stream, application_octet_stream,  "\1 octet-stream\0.bin\0.rar" ) \
    _MIME( oga, audio_ogg, "\3.ogg\0.ogx\0oga" )  /* OGG audio */ \
-   _MIME( ogv, video_ogg, "\5 ogg.ogv" )  /* OGG video */ \
+   _MIME( ogv, video_ogg, "\5 ogg\0.ogv" )  /* OGG video */ \
+   _MIME( png, image_png,  "\4.png" ) \
    _MIME( pdf, application_pdf, "\1.pdf" )  /* Adobe Portable Document Format (PDF) */ \
    _MIME( rar, application_x_rar_compressed, "\1 x-rar\0.rar" )  /* RAR archive */ \
+   _MIME( rss, application_rss, "\1 rss+xml\0.rss" ) \
    _MIME( rtf, application_rtf, "\1.rtf" )  /* Rich Text Format (RTF) */ \
    _MIME( sh, application_x_sh, "\1 x-sh\0.sh" )  /* Bourne shell script */ \
-   _MIME( svg, image_svg_xml, "\4svg+xml\0.svg" )  /* Scalable Vector Graphics (SVG) */ \
+   _MIME( svg, image_svg_xml, "\4 svg+xml\0.svg" )  /* Scalable Vector Graphics (SVG) */ \
    _MIME( swf, application_x_shockwave_flash, "\1 x-shockwave-flash\0.swf" )  /* Small web format (SWF) or Adobe Flash document */ \
    _MIME( tar, application_x_tar, "\1 x-tar\0.tar" )  /* Tape Archive (TAR) */ \
+   _MIME( tiff, image_tiff,  "\4.tiff" ) \
    _MIME( ttf, font_ttf, "\7.ttf\0.tif" )  /* TrueType Font */ \
    _MIME( wav, audio_x_wav, "\3 x-wav\0.wav" )  /* Waveform Audio Format */ \
    _MIME( weba, audio_webm, "\3.weba" )  /* WEBM audio */ \
@@ -92,17 +100,12 @@
    _MIME( zip, application_zip, "\1.zip" )  /* ZIP archive */ \
    _MIME( vid3gp, video_3gpp, "\5.3gp" )  /* 3GPP audio/video container */ \
    _MIME( vid3g2, video_3gpp2, "\5.3g2" )  /* 3GPP2 audio/video container */ \
-   _MIME( app7z, application_x_7z_compressed, "\1 x-7z-compressed\0.7z" )  /* 7-zip archive */ 
-
-//   _MIME( odp, application_vnd.oasis.opendocument.presentation, "\1.odp" )  /* OpenDocuemnt presentation document */ \
-//   _MIME( ods, application_vnd.oasis.opendocument.spreadsheet, "\1.ods" )  /* OpenDocuemnt spreadsheet document */ \
-//   _MIME( odt, application_vnd.oasis.opendocument.text, "\1.odt" )  /* OpenDocument text document */ \
+   _MIME( app7z, application_x_7z_compressed, "\1 x-7z-compressed\0.7z" )  /* 7-zip archive */ \
+   _MIME( odp, application_vnd_oasis_opendocument_presentation, "\1 vnd.oasis.opendocument.presentation\0.odp" )  /* OpenDocuemnt presentation document */\
+   _MIME( ods, application_vnd_oasis_opendocument_spreadsheet, "\1 vnd.oasis.opendocument.spreadsheet\0.ods" )  /* OpenDocuemnt spreadsheet document */ \
+   _MIME( odt, application_vnd_oasis_opendocument_text, "\1 vnd.oasis.opendocument.text\0.odt" )  /* OpenDocument text document */ \
 
 #endif
-
-
-#if 1 
-//scratch that
 
 
 const char* mimeclass_str =
@@ -174,6 +177,4 @@ static int getmimetype(const char* path){
 
 	return(MIMETYPE(unknown));
 }
-
-#endif
 

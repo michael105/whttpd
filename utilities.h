@@ -95,7 +95,7 @@ int ap_match( char* str, ulong l ){
 typedef __builtin_va_list va_list;
 
 
-#ifndef prints
+//#ifndef prints
 #define prints(...) dprints(STDOUT_FILENO,__VA_ARGS__,0)
 #define eprints(...) dprints(STDERR_FILENO,__VA_ARGS__,0)
 
@@ -172,7 +172,78 @@ uint _snprints( char *buf, uint len, ... ){
 		return(pos-buf);
 }
 
-#endif
+// bbuf unused.
+#define BBUFSIZE BUFSIZE
+
+char *bbuffer;
+char *bpos;
+char *bend;
+int bfd;
+int berr;
+
+
+void setbfd(int fd){
+	bfd = fd;
+}
+
+void setbbuf(char *buf){
+	bbuffer = bpos = buf;
+}
+
+int bflush(){
+	if ( !bbuffer ) return ( -EINVAL );
+
+	if ( !bfd ) bfd=1; // stdout
+
+	int ret = nwrite(bfd,bbuffer,(bpos-bbuffer));
+	if ( ret>0 )
+		bpos = bbuffer;
+	return(ret);
+}
+
+
+// write to buf, flush, if buffer full
+// doesn't append a 0
+// return negative errno on errors.
+//   else the number of bytes written.
+int bwrite( const char* str ){
+	//int ret = -(bpos-bbuf);
+	const char *p = str;
+	while ( *str ){
+		if ( bpos>= bend ){
+			int r;
+			if ( (r=bflush()) < 0 ){
+				berr = r;
+				return(r);
+			}
+		}
+		*bpos++ = *p++;
+	}
+	return(p-str);
+}
+
+
+// write strings
+// a null pointer aborts writing of the arguments,
+// is also used as sentinel.
+int _bprints( const char* str, ... ){
+#define bprints(...) (__VA_ARGS__,0)
+		int ret = 0;
+		const char *msg;
+		va_list args;
+		va_start(args,str);
+
+		while( (msg=va_arg(args,char*) ) ){
+			int i = bwrite(msg);
+			if ( i<0 )
+				return(i);
+			ret += i;
+		}
+
+		va_end(args);
+		return(ret);
+}
+
 
 
 
