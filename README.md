@@ -21,6 +21,12 @@ Optionally build html pages from markdown files with lowdown on the fly.
 To trigger reloads a small (10 lines) javascript is appended to each page,
 which shouldn't interfere with other javascript frameworks. (basic fetch, wait asyncron for errors)
 
+I wouldn't recommend using this in the wild. 
+There might be flaws, I don't know.
+If you do so against this advise, I'm eager to hear about
+the suspected vulnerabilities.
+
+
 -----
 
 ##### Install:
@@ -83,7 +89,7 @@ whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notify
 -----
 
 
-CC-BY-SA 4.0, 2025 misc147 (fee227), codeberg.org/misc1
+CC-BY-SA 4.0, 2025,26 misc147 (fee227), codeberg.org/misc1
 
 
 
