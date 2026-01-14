@@ -32,7 +32,7 @@ the suspected vulnerabilities.
 ##### Install:
 
 Either build yourself, or download the binary for 64bit linux supplied in
-/bin. The binary is statically linked with musl.
+/bin. The binary is statically linked with all requirements.
 
 Configuration is done via commandline arguments.
 
