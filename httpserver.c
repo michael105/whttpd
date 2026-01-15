@@ -40,7 +40,12 @@ checkForUpdate();
 
 }
 
+// reap zombies
+void sigchldhandler(int sig) {
+	while(waitpid(-1, NULL, WNOHANG) > 0);
+}
 
+// handle exit
 void sighandler(int sig){
 	verbose(0,"Quit: ",FI(sig));
 	if ( sockfd ) close(sockfd);
@@ -408,7 +413,8 @@ static void __attribute__((noreturn))http_handler( int fd ){
 }
 
 
-
+// the main loop, accepting http requests and
+// forking the replying childs
 void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_t parent, char* htmlroot ){
 	// Create a socket
 	int rfd;
@@ -429,6 +435,12 @@ void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_
 		warning(0,"Couldn't install signal handler");
 		// try to continue anyways.
 	}
+
+
+	sa.sa_handler = sigchldhandler;
+	if ( sigaction (SIGCHLD, &sa, 0) )
+		warning(0,"Couldn't install sigchld handler");
+
 
 	prctl(PR_SET_NAME, (ulong)_Q(MODULE), 0, 0, 0);
 
@@ -473,9 +485,11 @@ void __attribute__((noreturn))httpd_serve( uint opts, _set_value setting[], pid_
 	while (1) {
 		verbose(2,"accept");
 		while ((rfd = accept(sockfd, (struct sockaddr *) &address, &addrlen)) < 0){
-			warning(ERRNO(rfd),"server: accept");
-			usleep( retr*retr*20000 );
-			retr = (retr+1)&0x7;
+			if ( ERRNO(rfd)!=4 ){ // don't warn for interrupted system calls
+				warning(ERRNO(rfd),"server: accept");
+				usleep( retr*retr*20000 );
+				retr = (retr+1)&0x7;
+			}
 		}
 		retr=0;
 
