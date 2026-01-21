@@ -21,10 +21,26 @@ Optionally build html pages from markdown files with lowdown on the fly.
 To trigger reloads a small (10 lines) javascript is appended to each page,
 which shouldn't interfere with other javascript frameworks. (basic fetch, wait asyncron for errors)
 
+-----
+
 I wouldn't recommend using this in the wild. 
 There might be flaws, I don't know.
 If you do so against this advise, I'm eager to hear about
 the suspected vulnerabilities.
+I'd recommend: Use an isolated container. Watch used ressources (memory,cpu).
+	switch to an unprivileged user, and use capabilities in question.
+	(port>2000). E.g., whttpd parses paths only very briefly. But there's
+	no use in trying to implemenent security for a http server, which is
+	intended for local development usage..
+
+	Eventually I'm going to replace the call to sed / sh for website directories.
+	But it's the same. And should be save, since at this place no
+	input is involved besides the directory and file names.
+	IF you name a file `\\'\\"\rm \\-rf\\*` or something pathological
+	like that, I don't know, what's going to happen. there might be a breakout
+	possible. And there might be other possibilities.
+	It's written for local development, not for security.
+	It's also the reason for not preforking or threading.
 
 
 -----
