@@ -28,9 +28,9 @@ There might be flaws, I don't know.
 If you do so against this advise, I'm eager to hear about
 the suspected vulnerabilities.
 I'd recommend: Use an isolated container. Watch used ressources (memory,cpu).
-	switch to an unprivileged user, and use capabilities in question.
-	(port>2000). E.g., whttpd parses paths only very briefly. But there's
-	no use in trying to implemenent security for a http server, which is
+	switch to an unprivileged user, and use a port above 2000. 
+	E.g., whttpd parses paths only very briefly. But there's
+	no use in trying to implement security for a http server, which is
 	intended for local development usage..
 
 	Eventually I'm going to replace the call to sed / sh for website directories.
@@ -42,6 +42,27 @@ I'd recommend: Use an isolated container. Watch used ressources (memory,cpu).
 	It's written for local development, not for security.
 	It's also the reason for not preforking or threading.
 
+	It would be possible to prefork, when the socket's flags are changed.
+	The whole binary size comes with all flags enabled with 26kB, 
+	using 20 or 50 preforked servers might even become performant.
+
+	When compiling without inotify and javascript 'SSA' server part,
+	the binary's size gets down below 8kB.
+
+	Yet I need to get rid of the huge stack, which the kernel at my system 
+	bloats to legendary 170kB.
+	Compared to one page (4kB) for the globals (512Bytes would be enough, huua),
+	and some bytes at the stack -
+	I did set buffersizes to 4kB or something like that - well.
+	'Stackless' is, what I'm now aiming for.
+s 	I also do believe, it's an error in advance, keeping all the env variables
+	for a potentially endangoured process. Which should be regarded as
+	infected and malicious, in consequence.
+	Since this is a version for local website development, I will
+	not change that. 
+
+	I even regard this server for the intended job as stable, 
+	I'm using it myself.
 
 -----
 
