@@ -1,103 +1,96 @@
-
 ### whttpd
 
-#### ''SSA'' micro webserver
-
+#### "SSA" micro webserver
 
 For local website development, instantly usable without configuration.
 
-Forking, using sendfile. ('new' linux syscall).
+Forking, using sendfile ('new' Linux syscall).
 
+Uses inotify and "SSA" (Server-Side Aborts) to watch the webroot and instantly reload all HTML pages in the browser when files within the htmlroot directory hierarchy are modified. 
+Also reloads 404 pages and directory indexes with new content.
 
-Uses inotify and ''SSA'' (Server Side Aborts) to watch the webroot and instantly reload all html pages in the browser,
-when files within the htmlroot directory hierarchy are modified. 
-Reload also 404 sites and directory indexes with new content.
+Can optionally automatically rebuild pages with make or any other tool if sources are changed in the htmlroot or another watched location.
 
-Can optionally automatically rebuild pages with make or any other tool, 
-if sources are changed in the htmlroot or another watched location.
+Optionally builds HTML pages from Markdown files with lowdown on the fly.
 
-Optionally build html pages from markdown files with lowdown on the fly.
-
-To trigger reloads a small (10 lines) javascript is appended to each page,
-which shouldn't interfere with other javascript frameworks. (basic fetch, wait asyncron for errors)
+To trigger reloads in the browser, a small (10 lines) JavaScript snippet is appended to each page, which shouldn't interfere with other JavaScript frameworks. 
+(Basic background fetch, waiting asynchronously for errors, with the SSA - Server-Side Aborts - triggered by file modifications on the server side.)
 
 -----
 
 I wouldn't recommend using this in the wild. 
 There might be flaws, I don't know.
-If you do so against this advise, I'm eager to hear about
-the suspected vulnerabilities.
-I'd recommend: Use an isolated container. Watch used ressources (memory,cpu).
-	switch to an unprivileged user, and use a port above 2000. 
+If you do so against this advice, I'm eager to hear about the suspected vulnerabilities.
+I'd recommend: Use an isolated container. Watch used resources (memory, cpu).
+	Switch to an unprivileged user, and use a port above 2000. 
 	E.g., whttpd parses paths only very briefly. But there's
-	no use in trying to implement security for a http server, which is
-	intended for local development usage..
+	no use in trying to implement security for an HTTP server which is
+	intended for local development usage.
 
-	Eventually I'm going to replace the call to sed / sh for website directories.
-	But it's the same. And should be save, since at this place no
+	Eventually, I'm going to replace the call to sed / sh for website directories.
+	But it's the same, and it should be safe since at this place no
 	input is involved besides the directory and file names.
-	IF you name a file `\\'\\"\rm \\-rf\\*` or something pathological
-	like that, I don't know, what's going to happen. there might be a breakout
-	possible. And there might be other possibilities.
+	If you name a file `\\'\\"\rm \\-rf\\*` or something pathological
+	like that, I don't know what's going to happen. There might be a breakout
+	possible, and there might be other possibilities.
 	It's written for local development, not for security.
-	It's also the reason for not preforking or threading.
+	This is also the reason for not preforking or threading.
 
-	It would be possible to prefork, when the socket's flags are changed.
-	The whole binary size comes with all flags enabled with 26kB, 
-	using 20 or 50 preforked servers might even become performant.
+	It would be possible to prefork when the socket's flags are changed.
+	The whole binary size is around 26kB with all flags enabled; 
+	using 20 or 50 preforked servers might even be performant.
 
-	When compiling without inotify and javascript 'SSA' server part,
-	the binary's size gets down below 8kB.
+	When compiling without inotify and the JavaScript 'SSA' server part,
+	the binary's size drops below 8kB.
 
-	Yet I need to get rid of the huge stack, which the kernel at my system 
-	bloats to legendary 170kB.
-	Compared to one page (4kB) for the globals (512Bytes would be enough, huua),
-	and some bytes at the stack -
-	I did set buffersizes to 4kB or something like that - well.
-	'Stackless' is, what I'm now aiming for.
-s 	I also do believe, it's an error in advance, keeping all the env variables
-	for a potentially endangoured process. Which should be regarded as
-	infected and malicious, in consequence.
+	Yet I need to get rid of the huge stack which the kernel on my system 
+	bloats to a legendary 170kB.
+	Compared to one page (4kB) for the globals (512 bytes would be enough, haha)
+	and some bytes on the stack —
+	I did set buffer sizes to 4kB or something like that — well.
+	'Stackless' is what I'm now aiming for.
+ 	I also believe it's a mistake to keep all the environment variables
+	for a potentially vulnerable process, which should consequently be regarded as
+	infected and malicious.
 	Since this is a version for local website development, I will
 	not change that. 
 
-	I even regard this server for the intended job as stable, 
+	I even regard this server as stable for the intended job; 
 	I'm using it myself.
 
 -----
 
-##### Install:
+##### Installation:
 
-Either build yourself, or download the binary for 64bit linux supplied in
-/bin. The binary is statically linked with all requirements.
+Either build it yourself, or download the binary for 64-bit Linux supplied in
+/bin. The binary is statically linked with all dependencies.
 
-Configuration is done via commandline arguments.
+Configuration is done via command-line arguments.
 
-To browse markdown files as html, lowdown is needed.  
-[https://github.com/kristapsdz/lowdown](https://github.com/kristapsdz/lowdown) / [https://github.com/michael105/static-bin](https://github.com/michael105/static-bin)
+To browse Markdown files as HTML, lowdown is needed.[https://github.com/kristapsdz/lowdown](https://github.com/kristapsdz/lowdown) /[https://github.com/michael105/static-bin](https://github.com/michael105/static-bin)
 
 
 ##### Usage:
 
 
-   `whttpd`
+`whttpd`
 
-serve the current directory at port 4000.
+Serves the current directory at port 4000.
 (http://localhost:4000)
 
 
 `whttpd -w [htmlroot]`
 
-Start webserver (default port 4000) and the 'ssa' server (port 4001).  
-Modify all sent html pages, append a small javascript, and trigger reloads  
-in the clients, as soon files within htmlroot are modified, added or
+Starts the webserver (default port 4000) and the 'SSA' server (port 4001).  
+Modifies all sent HTML pages, appends a small JavaScript snippet, and triggers reloads  
+in the clients as soon as files within htmlroot are modified, added, or
 deleted.
 
 <br>
 
 
 ```
-whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notifyport] [-R recursion] [-I header] [-A append] [-e cmd] [htmlroot] [watchdir1] [watchdir2 ...]
+whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notifyport] [-R recursion] [-I header][-A append] [-e cmd] [htmlroot] [watchdir1] [watchdir2 ...]
 
  -h                show usage
  -H                show help
@@ -118,47 +111,22 @@ whttpd [-hHvqCaLwmiM] [-r htmlroot] [-p serverport] [-g gid] [-u uid] [-P notify
  -i                lowdown, with options --html-no-skiphtml and --html-no-escapehtml
  -I header         html before the output of -i
  -A append         html after the output of -i
- -M                execute make in 'htmlroot', when files are changed
- -e cmd            execute cmd in 'htmlroot', when files are changed
- ```
+ -M                execute make in 'htmlroot' when files are changed
+ -e cmd            execute cmd in 'htmlroot' when files are changed
+```
 
 
 -----
 
 
-CC-BY-SA 4.0, 2025,26 misc147 (fee227), codeberg.org/misc1
+CC-BY-SA 4.0, 2025, 2026 misc147 (fee227), codeberg.org/misc1
 
+In my interpretation and intention, the CC-BY-SA license
+allows reusing this work in whole or in part,
+even commercially, without infecting other code.
 
-
-In my interpretation and intention, the cc-by-sa license
-allows to reuse this work in its whole or parts,
-also commercially, without infecting.
-
-
-(As long, my work isn't the substantial part of the derived work, this
-might be discussable, but silly as well.)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(As long as my work isn't the substantial part of the derived work, this
+might be debatable, but silly as well.)
 
 
 
