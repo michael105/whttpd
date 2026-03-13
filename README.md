@@ -23,7 +23,7 @@ Can optionally automatically rebuild pages with make or any other tool if source
 Optionally builds HTML pages from Markdown files with lowdown on the fly.
 
 To trigger reloads in the browser, a small (10 lines) JavaScript snippet is appended to each page, which shouldn't interfere with other JavaScript frameworks. 
-(Basic background fetch, waiting asynchronously for errors, with the SSA - Server-Side Aborts - triggered by file modifications on the server side.)
+(Basic background fetch, waiting asynchronously for errors, with the SSA - Server-Side Aborts - :triumph: triggered by file modifications on the server side.)
 
 -----
 
