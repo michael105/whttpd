@@ -5,7 +5,8 @@
 
 ```
 This README is written by me, and corrected for grammar by gemini.
-For several reasons I'm clearly marking any ai usage.
+For several reasons I'm clearly marking any ai usage. 
+The code is written by me. misc147
 ```
 
 
