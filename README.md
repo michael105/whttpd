@@ -2,6 +2,10 @@
 
 #### "SSA" micro webserver
 
+
+`This README is written by me, and corrected for grammar by gemini.`
+
+
 For local website development, instantly usable without configuration.
 
 Forking, using sendfile ('new' Linux syscall).
