@@ -15,7 +15,7 @@ For local website development, instantly usable without configuration.
 
 Forking, using sendfile ('new' Linux syscall).
 
-Uses inotify and "SSA" (Server-Side Aborts) to watch the webroot and instantly reload all HTML pages in the browser when files within the htmlroot directory hierarchy are modified. 
+Uses inotify and "SSA" (Server-Side Aborts) :innocent: to watch the webroot and instantly reload all HTML pages in the browser when files within the htmlroot directory hierarchy are modified. 
 Also reloads 404 pages and directory indexes with new content.
 
 Can optionally automatically rebuild pages with make or any other tool if sources are changed in the htmlroot or another watched location.
