@@ -3,7 +3,8 @@
 #### "SSA" micro webserver
 
 
-```This README is written by me, and corrected for grammar by gemini.
+```
+This README is written by me, and corrected for grammar by gemini.
 For several reasons I'm clearly marking any ai usage.
 ```
 
