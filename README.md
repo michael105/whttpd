@@ -6,7 +6,10 @@
 ```
 This README is written by me, and corrected for grammar by gemini.
 For several reasons I'm clearly marking any ai usage. 
-The code is written by me. misc147
+The code is written by me, but I did a short ai security review.
+For my interest only, the server shouldn't be accessible at the internet,
+it's not written for that.
+misc147
 ```
 
 
